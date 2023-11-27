@@ -1,5 +1,4 @@
 import algoliasearch from "algoliasearch/lite";
-import { Hit as AlgoliaHit } from "instantsearch.js";
 import { GetServerSideProps } from "next";
 import Head from "next/head";
 import singletonRouter from "next/router";
@@ -42,15 +41,7 @@ export function isEmpty(str) {
   return !str || 0 === str.length;
 }
 
-type HitProps = {
-  hit: AlgoliaHit<{
-    sku: string;
-    brand: string;
-    price: number;
-  }>;
-};
-
-function Hit({ hit }: HitProps) {
+function Hit({ hit }) {
   return (
     <>
       <Highlight hit={hit} attribute="sku" className="Hit-label" />

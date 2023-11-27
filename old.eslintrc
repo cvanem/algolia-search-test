@@ -1,5 +1,6 @@
 {
   "extends": ["plugin:@next/next/recommended"],
+  "parser": "babel-eslint",
   "rules": {
     // This rule is not able to find the `pages/` folder in the monorepo.
     "@next/next/no-html-link-for-pages": ["off"],
