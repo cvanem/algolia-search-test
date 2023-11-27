@@ -58,7 +58,7 @@ type HomePageProps = {
 };
 
 const PanelWithRefinement = ({ facet }) => {
-  const refinementListProps = useRefinementList({ attribute: facet });  
+  const refinementListProps = useRefinementList({ attribute: facet });
   const { items = [] } = refinementListProps;
   const count = items?.length;
 
@@ -77,14 +77,29 @@ const Facets = () => {
     search: "",
   });
   const instantSearchProps = useInstantSearch() as any;
-  console.log({ instantSearchProps });
+  const dwProps = useDynamicWidgets({ facets: ["*"] });
+  console.log({ instantSearchProps, dwProps });
 
   const facets =
     instantSearchProps?.results?.renderingContent?.facetOrdering?.facets
       ?.order ?? [];
   console.log({ facets });
+  const facetInfo =
+    (instantSearchProps?.results._rawResults ?? [{}])[0]?.facets ?? {};
+  const enabledFacets = Object.keys(facetInfo)
+    .filter((k) => Object.keys(facetInfo[k]).find((k2) => facetInfo[k][k2] > 0))
+    .map((k) => k)
+    .filter((f) =>
+      isEmpty(search)
+        ? true
+        : f?.toLowerCase()?.startsWith(search?.toLowerCase())
+    )
+    .sort(sortAscendingToLower)
+    .filter((facet, i) => i < count);
 
-  const filtered = facets
+  console.log({ facetInfoCount: Object.keys(facetInfo).length, enabledFacets });
+
+  /*const filtered = facets
     .sort(sortAscendingToLower)
     .filter((f) => {
       return isEmpty(search)
@@ -92,6 +107,7 @@ const Facets = () => {
         : f?.toLowerCase()?.startsWith(search?.toLowerCase());
     })
     .filter((f, i) => i < count);
+    */
   const handleMore = () => setState((p) => ({ ...p, count: p.count + 10 }));
   const handleSearch = (e) => {
     setState((p) => ({ ...p, search: e?.target?.value }));
@@ -105,9 +121,16 @@ const Facets = () => {
         onChange={handleSearch}
       />
       <p></p>
-      {filtered.map((facet) => (
+      {/*filtered.map((facet) => (
         <div key={facet}>
           <PanelWithRefinement facet={facet} />
+        </div>
+      ))*/}
+      {enabledFacets.map((facet) => (
+        <div key={facet}>
+          <Panel header={facet}>
+            <RefinementList attribute={facet} />
+          </Panel>
         </div>
       ))}
       <button onClick={handleMore}>Show 10 More</button>
@@ -137,15 +160,16 @@ export default function HomePage({ serverState, url }: HomePageProps) {
         <div className="Container">
           <div>
             <Facets />
-            {/*<DynamicWidgets
-              facets={[]}
-              maxValuesPerFacet={10}
-              fallbackComponent={FallbackComponent}
-            >
-              <HierarchicalMenu
-                attributes={["hierarchical.lvl0", "hierarchical.lvl1"]}
-              />
-            </DynamicWidgets>
+            {/*
+              <DynamicWidgets
+                facets={["*"]}
+                maxValuesPerFacet={10}
+                fallbackComponent={DynamicFallbackComponent}
+              >
+                <HierarchicalMenu
+                  attributes={["hierarchical.lvl0", "hierarchical.lvl1"]}
+                />
+              </DynamicWidgets>
       */}
           </div>
           <div>
@@ -158,6 +182,33 @@ export default function HomePage({ serverState, url }: HomePageProps) {
   );
 }
 
+function DynamicFallbackComponent({
+  attribute,
+  ...other
+}: {
+  attribute: string;
+}) {
+  /*const refinementListProps = useRefinementList({ attribute });
+  const { items = [] } = refinementListProps;
+  const count = items?.length;
+  */
+  const count = 0;
+  const instantSearchProps = useInstantSearch() as any;
+  const dwProps = useDynamicWidgets({ facets: [] });
+  //console.log({ dwProps });
+
+  //console.log({ attribute, other, count });
+
+  return true ? (
+    <></>
+  ) : count > 0 ? (
+    <Panel header={attribute}>
+      <RefinementList attribute={attribute} />
+    </Panel>
+  ) : (
+    <></>
+  );
+}
 function FallbackComponent({ attribute, ...other }: { attribute: string }) {
   return (
     <Panel header={attribute}>
