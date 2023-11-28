@@ -37,7 +37,7 @@ function Hit({ hit }) {
     <>
       <Highlight hit={hit} attribute="sku" className="Hit-label" />
       <span className="Hit-sku">SKU: {hit.sku}</span>
-      <span className="Hit-brand">Brand: {hit.brand}</span> |
+      <span className="Hit-brand">Brand: {hit.Brand}</span> |
       <span className="Hit-price">${hit.price}</span>
     </>
   );
@@ -63,16 +63,51 @@ const Facets = () => {
   console.log({ facets });
   const facetInfo =
     (instantSearchProps?.results._rawResults ?? [{}])[0]?.facets ?? {};
-  const enabledFacets = Object.keys(facetInfo)
+
+  var enabledFacets = [] as string[];
+  var enabledFacetCount = 0;
+
+  for (var i = 0; i < facets.length; i++) {
+    if (enabledFacetCount < count) {
+      const k = facets[i];
+      if (
+        facetInfo[k] &&
+        Object.keys(facetInfo[k]).find((k2) => facetInfo[k][k2] > 0)
+      ) {
+        if (
+          isEmpty(search) ||
+          k?.toLowerCase()?.startsWith(search?.toLowerCase()) ||
+          Object.keys(facetInfo[k]).find((k2) =>
+            k2?.toLowerCase().startsWith(search?.toLowerCase())
+          )
+        ) {
+          enabledFacets.push(k);
+          enabledFacetCount++;
+        }
+      }
+    } else {
+      break;
+    }
+  }
+
+  /*const enabledFacets = Object.keys(facetInfo)
     .filter((k) => Object.keys(facetInfo[k]).find((k2) => facetInfo[k][k2] > 0))
     .map((k) => k)
     .filter((f) =>
       isEmpty(search)
         ? true
-        : f?.toLowerCase()?.startsWith(search?.toLowerCase())
-    )
-    .sort(sortAscendingToLower)
-    .filter((facet, i) => i < count);
+        : f?.toLowerCase()?.startsWith(search?.toLowerCase()) ||
+          Object.keys(facetInfo[f]).find((k2) => {
+            var ret = k2?.toLowerCase().startsWith(search?.toLowerCase());
+            if (ret) {
+              console.log({ f, k2, ret });
+            }
+            return ret;
+          })
+    );
+  //.sort(sortAscendingToLower)
+  //.filter((facet, i) => i < count);
+  */
 
   console.log({ facetInfoCount: Object.keys(facetInfo).length, enabledFacets });
 
