@@ -15,18 +15,20 @@ import {
   getServerState,
   useInstantSearch,
   useDynamicWidgets,
+  HierarchicalMenu,
+  Menu,
 } from "react-instantsearch";
 import { createInstantSearchRouterNext } from "react-instantsearch-router-nextjs";
 import { Panel } from "../components/Panel";
 
 const client = algoliasearch("J7TKKA0SIS", "21c30f0956dacb0e525d274e073059be");
 const indexName = "product-index";
-
-function sortAscendingToLower(a = "" as any, b = "" as any) {
-  if ((a ?? "").toLowerCase() < (b ?? "").toLowerCase()) return -1;
-  if ((a ?? "").toLowerCase() > (b ?? "").toLowerCase()) return 1;
-  return 0;
-}
+const hierarchicalAttributes = [
+  "hierarchicalCategories.lvl0",
+  "hierarchicalCategories.lvl1",
+  "hierarchicalCategories.lvl2",
+  "hierarchicalCategories.lvl3",
+];
 
 function isEmpty(str) {
   return !str || 0 === str.length;
@@ -54,13 +56,22 @@ const Facets = () => {
     search: "",
   });
   const instantSearchProps = useInstantSearch() as any;
-  useDynamicWidgets({ facets: ["*"] });
-  console.log({ instantSearchProps });
+
+  //useDynamicWidgets({ facets: ["*"] });
+
+  useDynamicWidgets({
+    facets: [],
+    transformItems(_items, { results }) {
+      return Object.keys(
+        results._rawResults[0].facets?.applicable_facets ?? {}
+      );
+    },
+  });
 
   const facets =
     instantSearchProps?.results?.renderingContent?.facetOrdering?.facets
       ?.order ?? [];
-  console.log({ facets });
+
   const facetInfo =
     (instantSearchProps?.results._rawResults ?? [{}])[0]?.facets ?? {};
 
@@ -90,26 +101,11 @@ const Facets = () => {
     }
   }
 
-  /*const enabledFacets = Object.keys(facetInfo)
-    .filter((k) => Object.keys(facetInfo[k]).find((k2) => facetInfo[k][k2] > 0))
-    .map((k) => k)
-    .filter((f) =>
-      isEmpty(search)
-        ? true
-        : f?.toLowerCase()?.startsWith(search?.toLowerCase()) ||
-          Object.keys(facetInfo[f]).find((k2) => {
-            var ret = k2?.toLowerCase().startsWith(search?.toLowerCase());
-            if (ret) {
-              console.log({ f, k2, ret });
-            }
-            return ret;
-          })
-    );
-  //.sort(sortAscendingToLower)
-  //.filter((facet, i) => i < count);
-  */
-
-  console.log({ facetInfoCount: Object.keys(facetInfo).length, enabledFacets });
+  console.log({
+    facets,
+    facetInfoCount: Object.keys(facetInfo).length,
+    enabledFacets,
+  });
 
   const handleMore = () => setState((p) => ({ ...p, count: p.count + 10 }));
   const handleSearch = (e) => {
@@ -124,6 +120,17 @@ const Facets = () => {
         onChange={handleSearch}
       />
       <p></p>
+      <Panel header="Applicable Facets">
+        <Menu attribute={"applicable_facets"} />
+      </Panel>
+
+      <Panel header="Departments">
+        <HierarchicalMenu
+          attributes={hierarchicalAttributes}
+          limit={20}
+          showParentLevel={false}
+        />
+      </Panel>
       {enabledFacets.map((facet) => (
         <div key={facet}>
           <Panel header={facet}>
